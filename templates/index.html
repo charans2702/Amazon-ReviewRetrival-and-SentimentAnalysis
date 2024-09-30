@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone 12 Review Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #f4f4f4;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #333; 
+            text-align: center;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button { 
+            padding: 10px 15px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #reviewsList { 
+            margin-top: 30px; 
+        }
+        #reviewsList > div {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .sentiment {
+            font-weight: bold;
+        }
+        .positive { color: #4caf50; }
+        .neutral { color: #ffc107; }
+        .negative { color: #f44336; }
+        #sentimentChart { 
+            margin-top: 30px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>iPhone 12 Review Analysis</h1>
+        
+        <div class="form-group">
+            <label for="newReview">Analyze New Review:</label>
+            <textarea id="newReview" rows="4" placeholder="Enter a review..."></textarea>
+            <button onclick="analyzeSentiment()">Analyze Sentiment</button>
+        </div>
+        
+        <div class="form-group">
+            <label for="color">Color:</label>
+            <select id="color">
+                <option value="N/A">Select</option>
+                <option value="Blue">Blue</option>
+                <option value="Black">Black</option>
+                <option value="(PRODUCT)RED">(PRODUCT)RED</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="storage">Storage Size:</label>
+            <select id="storage">
+                <option value="N/A">Select</option>
+                <option value="128GB">128GB</option>
+                <option value="64GB">64GB</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="rating">Rating:</label>
+            <select id="rating">
+                <option value="N/A">Select</option>
+                <option value="5.0">5.0</option>
+                <option value="4.0">4.0</option>
+                <option value="3.0">3.0</option>
+                <option value="2.0">2.0</option>
+                <option value="1.0">1.0</option>
+            </select>
+        </div>
+        
+        <button onclick="fetchReviews()">Fetch Reviews</button>
+        
+        <div id="reviewsList"></div>
+        <canvas id="sentimentChart"></canvas>
+    </div>
+
+    <script>
+        async function analyzeSentiment() {
+            const review = document.getElementById('newReview').value;
+            const response = await fetch('/sentiment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: review })
+            });
+            const result = await response.json();
+            alert(`Sentiment: ${result.sentiment}`);
+        }
+        
+        async function fetchReviews() {
+            const color = document.getElementById('color').value;
+            const storage = document.getElementById('storage').value;
+            const rating = document.getElementById('rating').value;
+            
+            const response = await fetch(`/reviews?color=${color}&storage=${storage}&rating=${rating}`);
+            const reviews = await response.json();
+            
+            displayReviews(reviews);
+            displaySentimentChart(reviews);
+        }
+        
+        function displayReviews(reviews) {
+            const reviewsList = document.getElementById('reviewsList');
+            reviewsList.innerHTML = reviews.map(review => `
+                <div>
+                    <h3>${review['Review Title']}</h3>
+                    <p>${review['Review Text']}</p>
+                    <p>Color: ${review['Color'] || 'N/A'}, Storage Size: ${review['Storage Size'] || 'N/A'}</p>
+                    <p>Rating: ${review['Rating']}, 
+                    Sentiment: <span class="sentiment ${review['Sentiment']}">${review['Sentiment']}</span></p>
+                </div>
+            `).join('');
+        }
+        
+        function displaySentimentChart(reviews) {
+            const sentiments = reviews.map(review => review['Sentiment']);
+            const counts = {
+                positive: sentiments.filter(s => s === 'positive').length,
+                neutral: sentiments.filter(s => s === 'neutral').length,
+                negative: sentiments.filter(s => s === 'negative').length
+            };
+        
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        label: 'Sentiment Distribution',
+                        data: [counts.positive, counts.neutral, counts.negative],
+                        backgroundColor: ['#4caf50', '#ffc107', '#f44336']
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Reviews'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
