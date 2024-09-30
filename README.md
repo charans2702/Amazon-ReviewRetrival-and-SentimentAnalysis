@@ -73,7 +73,7 @@ The main components of the project are:
 4. Open `index.html` in a web browser to use the frontend interface.
 
 ### USER INTERFACE
-![userinterface](result_image/q1.png)
+![iPhone 12 Reviews](./result_images/q1.png)
 
 ## API Endpoints
 
